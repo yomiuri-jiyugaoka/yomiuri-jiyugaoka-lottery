@@ -115,7 +115,7 @@ function render(){
     card.innerHTML = `
       <div class="p-emoji">${p.emoji||'🎁'}</div>
       <div class="p-name">${escapeHtml(p.name)}</div>
-      <div class="p-count">のこり <span class="num mono">${p.remaining}</span></div>
+      <div class="p-count">${p.remaining>0 ? '受付中' : '終了しました'}</div>
     `;
     board.appendChild(card);
   });
