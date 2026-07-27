@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>抽選会 - スタッフ設定</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="stage">
+  <div class="admin-box">
+    <a class="back-link" href="index.html">← 抽選画面にもどる</a>
+
+    <!-- PIN screen -->
+    <div id="pinScreen">
+      <h1>暗証番号を入力してください</h1>
+      <div class="pin-display" id="pinDisplay"></div>
+      <div class="pin-pad" id="pinPad"></div>
+      <div class="pin-error" id="pinError"></div>
+    </div>
+
+    <!-- Settings screen (hidden until PIN correct) -->
+    <div id="settingsScreen" hidden>
+      <h1>抽選設定</h1>
+
+      <div class="small-label">センター名（抽選画面の上部に表示）</div>
+      <div class="field-row">
+        <input type="text" id="centerNameInput" class="name-input" placeholder="例）よみうりカルチャー自由が丘">
+      </div>
+
+      <div class="small-label">景品一覧（のこり数はその場で修正できます）</div>
+      <div class="prize-edit-list" id="prizeEditList"></div>
+
+      <div class="small-label">新しい景品を追加</div>
+      <div class="field-row">
+        <input type="text" id="newName" class="name-input" placeholder="景品名（例：1等　商品券）">
+      </div>
+      <div class="field-row">
+        <input type="text" id="newEmoji" class="emoji-input" placeholder="絵文字" maxlength="4">
+        <input type="number" id="newQty" min="1" value="5" placeholder="数">
+      </div>
+      <div class="settings-actions">
+        <button class="btn-primary" id="addPrizeBtn">追加する</button>
+      </div>
+
+      <div class="settings-actions" style="margin-top:20px;">
+        <button class="btn-secondary" id="resetStockBtn">在庫をすべてリセット</button>
+        <button class="btn-danger" id="clearHistoryBtn">履歴を消去</button>
+      </div>
+      <div class="settings-actions">
+        <button class="btn-primary" id="saveSettingsBtn">保存する</button>
+      </div>
+      <div class="save-toast" id="saveToast"></div>
+    </div>
+  </div>
+</div>
+
+<script src="storage.js"></script>
+<script>
+const ADMIN_PIN = '1234'; // スタッフ用の暗証番号。変更したい場合はここを書き換えてください。
+let state = loadLotteryState();
+let pinBuffer = '';
+
+// ---------- PIN ----------
+function buildPinPad(){
+  const pad = document.getElementById('pinPad');
+  pad.innerHTML = '';
+  const keys = ['1','2','3','4','5','6','7','8','9','消','0','決定'];
+  keys.forEach(k=>{
+    const b = document.createElement('button');
+    b.className = 'pin-key';
+    b.textContent = k;
+    b.addEventListener('click', ()=> onPinKey(k));
+    pad.appendChild(b);
+  });
+  updatePinDisplay();
+}
+function updatePinDisplay(){
+  const disp = document.getElementById('pinDisplay');
+  disp.innerHTML = '';
+  for(let i=0;i<4;i++){
+    const dot = document.createElement('div');
+    dot.className = 'pin-dot' + (i < pinBuffer.length ? ' filled':'');
+    disp.appendChild(dot);
+  }
+}
+function onPinKey(k){
+  const err = document.getElementById('pinError');
+  err.textContent = '';
+  if(k === '消'){ pinBuffer = pinBuffer.slice(0,-1); updatePinDisplay(); return; }
+  if(k === '決定'){
+    if(pinBuffer === ADMIN_PIN){
+      pinBuffer = '';
+      document.getElementById('pinScreen').hidden = true;
+      document.getElementById('settingsScreen').hidden = false;
+      openSettingsScreen();
+    }else{
+      err.textContent = '暗証番号が違います';
+      pinBuffer = '';
+      updatePinDisplay();
+    }
+    return;
+  }
+  if(pinBuffer.length < 4){
+    pinBuffer += k;
+    updatePinDisplay();
+  }
+}
+
+// ---------- settings ----------
+function openSettingsScreen(){
+  document.getElementById('centerNameInput').value = state.centerName;
+  renderPrizeEditList();
+}
+function renderPrizeEditList(){
+  const list = document.getElementById('prizeEditList');
+  list.innerHTML = '';
+  state.prizes.forEach(p=>{
+    const row = document.createElement('div');
+    row.className = 'prize-edit-row';
+    row.innerHTML = `
+      <div class="pe-top">
+        <span class="pe-emoji">${p.emoji||'🎁'}</span>
+        <span class="pe-name">${escapeHtml(p.name)}</span>
+        <button class="del-btn" data-del="${p.id}" title="削除">🗑️</button>
+      </div>
+      <div class="pe-bottom">
+        のこり <input type="number" min="0" value="${p.remaining}" data-id="${p.id}" data-field="remaining">
+        / 総数 <input type="number" min="0" value="${p.total}" data-id="${p.id}" data-field="total">
+      </div>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('input[type=number]').forEach(inp=>{
+    inp.addEventListener('change', e=>{
+      const id = Number(e.target.dataset.id);
+      const field = e.target.dataset.field;
+      const p = state.prizes.find(p=>p.id===id);
+      if(p) p[field] = Math.max(0, Number(e.target.value)||0);
+    });
+  });
+  list.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const id = Number(e.target.dataset.del);
+      state.prizes = state.prizes.filter(p=>p.id!==id);
+      renderPrizeEditList();
+    });
+  });
+}
+
+function addPrizeFromForm(){
+  const emoji = document.getElementById('newEmoji').value.trim() || '🎁';
+  const name = document.getElementById('newName').value.trim();
+  const qty = Math.max(1, Number(document.getElementById('newQty').value)||1);
+  if(!name){ alert('景品名を入力してください'); return; }
+  state.prizes.push({ id: nextPrizeId(state), emoji, name, total: qty, remaining: qty });
+  document.getElementById('newEmoji').value = '';
+  document.getElementById('newName').value = '';
+  document.getElementById('newQty').value = 5;
+  renderPrizeEditList();
+}
+
+function showToast(msg){
+  const t = document.getElementById('saveToast');
+  t.textContent = msg;
+  setTimeout(()=>{ if(t.textContent===msg) t.textContent=''; }, 2500);
+}
+
+function saveSettings(){
+  state.centerName = document.getElementById('centerNameInput').value.trim() || 'ガラガラ抽選会';
+  const ok = saveLotteryState(state);
+  showToast(ok ? '保存しました✅' : '保存に失敗しました');
+}
+
+document.getElementById('addPrizeBtn').addEventListener('click', addPrizeFromForm);
+document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+document.getElementById('resetStockBtn').addEventListener('click', ()=>{
+  if(confirm('すべての景品の「のこり数」を総数にリセットします。よろしいですか？')){
+    state.prizes.forEach(p=> p.remaining = p.total);
+    renderPrizeEditList();
+  }
+});
+document.getElementById('clearHistoryBtn').addEventListener('click', ()=>{
+  if(confirm('抽選履歴をすべて消去します。よろしいですか？')){
+    state.history = [];
+  }
+});
+
+buildPinPad();
+</script>
+</body>
+</html>

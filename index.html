@@ -4,446 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ガラガラ抽選会</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap');
-
-:root{
-  --ink:#1c2b45;
-  --ink-deep:#12213a;
-  --red:#c8353f;
-  --red-deep:#a12630;
-  --gold:#e8a93a;
-  --gold-bright:#f6c85f;
-  --cream:#f7f0e0;
-  --paper:#fffaf2;
-  --bamboo:#4a7c59;
-  --shadow: 0 8px 24px rgba(18,33,58,.35);
-}
-
-*{ box-sizing:border-box; }
-html,body{ margin:0; padding:0; }
-body{
-  min-height:100vh;
-  background:
-    radial-gradient(circle at 20% -10%, #2a3f63 0%, transparent 45%),
-    radial-gradient(circle at 100% 0%, #24365a 0%, transparent 40%),
-    var(--ink);
-  background-color:var(--ink);
-  font-family:'Zen Maru Gothic', sans-serif;
-  color:var(--cream);
-  display:flex;
-  justify-content:center;
-  padding:24px 12px 60px;
-  position:relative;
-  overflow-x:hidden;
-}
-
-.mono{ font-family:'JetBrains Mono', monospace; }
-
-.stage{
-  width:100%;
-  max-width:640px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:22px;
-}
-
-/* ---------- header / noren ---------- */
-.booth-header{
-  width:100%;
-  text-align:center;
-  padding:18px 16px 22px;
-  position:relative;
-}
-.noren-title{
-  display:inline-block;
-  background:var(--red);
-  color:var(--paper);
-  padding:14px 30px;
-  border-radius:6px 6px 26px 26px;
-  font-weight:900;
-  font-size:clamp(22px,6vw,32px);
-  letter-spacing:.04em;
-  box-shadow:var(--shadow);
-  border:2px solid rgba(255,255,255,.15);
-}
-.center-name{
-  margin-top:10px;
-  font-size:13px;
-  color:var(--gold-bright);
-  opacity:.85;
-  letter-spacing:.05em;
-}
-
-.icon-btn{
-  position:absolute;
-  top:8px;
-  width:40px;
-  height:40px;
-  border-radius:50%;
-  border:2px solid rgba(247,240,224,.35);
-  background:rgba(255,255,255,.06);
-  color:var(--cream);
-  font-size:18px;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  transition:transform .15s ease, background .15s ease;
-}
-.icon-btn:hover{ background:rgba(255,255,255,.15); transform:scale(1.05); }
-.icon-btn:active{ transform:scale(.95); }
-#muteBtn{ left:8px; }
-#gearBtn{ right:8px; }
-
-/* ---------- drum ---------- */
-.drum-wrap{
-  position:relative;
-  width:100%;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
-.drum-frame{
-  position:relative;
-  width:min(78vw,300px);
-  aspect-ratio:1/1;
-}
-.drum-svg{
-  width:100%;
-  height:100%;
-  filter:drop-shadow(0 10px 18px rgba(0,0,0,.4));
-  transition: transform .1s linear;
-}
-.drum-svg.spinning{
-  animation: spin-drum 0.55s linear infinite;
-}
-@keyframes spin-drum{
-  0%{ transform:rotate(0deg); }
-  100%{ transform:rotate(360deg); }
-}
-.chute{
-  width:34px;
-  height:44px;
-  margin-top:-6px;
-  background:linear-gradient(180deg,var(--gold),var(--gold-bright));
-  clip-path:polygon(20% 0,80% 0,100% 100%,0 100%);
-  box-shadow: inset 0 -4px 6px rgba(0,0,0,.25);
-}
-
-.ball-pop{
-  position:absolute;
-  left:50%;
-  top:58%;
-  width:26px;
-  height:26px;
-  border-radius:50%;
-  background:radial-gradient(circle at 30% 30%, #fff, var(--gold-bright) 60%, var(--gold));
-  box-shadow:0 3px 6px rgba(0,0,0,.4);
-  opacity:0;
-  pointer-events:none;
-}
-.ball-pop.pop-anim{
-  animation: pop-out .7s ease-in forwards;
-}
-@keyframes pop-out{
-  0%{ opacity:1; transform:translate(-50%,-50%) scale(.4); }
-  40%{ opacity:1; transform:translate(-50%, 40px) scale(1.1); }
-  100%{ opacity:0; transform:translate(-50%, 130px) scale(1); }
-}
-
-/* ---------- ticket reveal ---------- */
-.ticket{
-  width:100%;
-  max-width:420px;
-  background:var(--paper);
-  color:var(--ink-deep);
-  border-radius:14px;
-  padding:22px 20px;
-  text-align:center;
-  box-shadow:var(--shadow);
-  border:3px dashed var(--red);
-  position:relative;
-  transform:scale(.8) translateY(10px);
-  opacity:0;
-  max-height:0;
-  overflow:hidden;
-  transition: all .35s cubic-bezier(.2,1.4,.4,1);
-  margin:0;
-}
-.ticket.show{
-  transform:scale(1) translateY(0);
-  opacity:1;
-  max-height:300px;
-  padding:22px 20px;
-}
-.ticket .label{
-  font-size:13px;
-  letter-spacing:.2em;
-  color:var(--red-deep);
-  font-weight:700;
-  margin-bottom:6px;
-}
-.ticket .emoji{ font-size:52px; line-height:1; }
-.ticket .prize-name{
-  font-size:clamp(20px,5.5vw,28px);
-  font-weight:900;
-  margin-top:6px;
-}
-.ticket .empty-msg{
-  font-size:18px;
-  font-weight:700;
-  color:var(--red-deep);
-}
-
-/* ---------- spin button ---------- */
-.spin-btn{
-  width:min(100%,340px);
-  padding:18px 20px;
-  font-family:'Zen Maru Gothic', sans-serif;
-  font-size:clamp(18px,5vw,22px);
-  font-weight:900;
-  letter-spacing:.05em;
-  color:var(--paper);
-  background:linear-gradient(180deg,var(--red) 0%,var(--red-deep) 100%);
-  border:none;
-  border-radius:50px;
-  box-shadow:0 6px 0 #7d1c23, 0 10px 20px rgba(0,0,0,.35);
-  cursor:pointer;
-  transition:transform .08s ease, box-shadow .08s ease;
-}
-.spin-btn:hover:not(:disabled){ filter:brightness(1.06); }
-.spin-btn:active:not(:disabled){
-  transform:translateY(4px);
-  box-shadow:0 2px 0 #7d1c23, 0 4px 10px rgba(0,0,0,.35);
-}
-.spin-btn:disabled{
-  opacity:.55;
-  cursor:not-allowed;
-  box-shadow:0 6px 0 #7d1c23;
-}
-.spin-btn:focus-visible{ outline:3px solid var(--gold-bright); outline-offset:3px; }
-.undo-btn{
-  background:none;
-  border:none;
-  color:var(--gold-bright);
-  text-decoration:underline;
-  font-family:'Zen Maru Gothic', sans-serif;
-  font-size:14px;
-  cursor:pointer;
-  padding:6px;
-}
-.undo-btn:disabled{ opacity:.3; cursor:not-allowed; text-decoration:none; }
-
-/* ---------- prize board ---------- */
-.prize-board{
-  width:100%;
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-  gap:12px;
-}
-.prize-card{
-  background:rgba(255,255,255,.06);
-  border:1.5px solid rgba(247,240,224,.18);
-  border-radius:12px;
-  padding:12px 10px;
-  text-align:center;
-  position:relative;
-}
-.prize-card.depleted{ opacity:.35; }
-.prize-card .p-emoji{ font-size:28px; }
-.prize-card .p-name{
-  font-size:13px;
-  font-weight:700;
-  margin:4px 0 6px;
-  line-height:1.3;
-  word-break:break-word;
-}
-.prize-card .p-count{
-  font-size:13px;
-  color:var(--gold-bright);
-}
-.prize-card .p-count .num{ font-size:15px; font-weight:700; }
-
-.board-title{
-  width:100%;
-  font-size:14px;
-  font-weight:700;
-  color:var(--gold-bright);
-  letter-spacing:.08em;
-  border-bottom:1px solid rgba(247,240,224,.2);
-  padding-bottom:6px;
-}
-
-/* ---------- history ---------- */
-.history{ width:100%; }
-.history ul{
-  list-style:none; margin:8px 0 0; padding:0;
-  display:flex; flex-direction:column; gap:6px;
-}
-.history li{
-  font-size:13px;
-  color:rgba(247,240,224,.75);
-  background:rgba(255,255,255,.04);
-  border-radius:8px;
-  padding:6px 10px;
-  display:flex;
-  justify-content:space-between;
-}
-.history li span.time{ color:rgba(247,240,224,.4); }
-
-/* ---------- confetti ---------- */
-.confetti-piece{
-  position:fixed;
-  top:-16px;
-  width:9px;
-  height:14px;
-  z-index:999;
-  pointer-events:none;
-  border-radius:2px;
-  animation: fall linear forwards;
-}
-@keyframes fall{
-  to{ transform:translateY(105vh) rotate(540deg); opacity:.9; }
-}
-
-/* ---------- modal ---------- */
-.modal-overlay{
-  position:fixed; inset:0;
-  background:rgba(12,20,36,.72);
-  display:flex; align-items:center; justify-content:center;
-  padding:16px;
-  z-index:200;
-}
-.modal-box{
-  background:var(--paper);
-  color:var(--ink-deep);
-  width:100%;
-  max-width:440px;
-  max-height:88vh;
-  overflow-y:auto;
-  border-radius:16px;
-  padding:22px 20px 26px;
-  box-shadow:var(--shadow);
-}
-.modal-box h2{
-  margin:0 0 14px;
-  font-size:18px;
-  font-weight:900;
-  color:var(--red-deep);
-  text-align:center;
-}
-.close-x{
-  float:right;
-  background:none; border:none;
-  font-size:20px;
-  cursor:pointer;
-  color:var(--ink-deep);
-  line-height:1;
-}
-
-/* PIN keypad */
-.pin-display{
-  display:flex; justify-content:center; gap:10px;
-  margin-bottom:16px;
-}
-.pin-dot{
-  width:16px; height:16px; border-radius:50%;
-  border:2px solid var(--red-deep);
-  background:transparent;
-}
-.pin-dot.filled{ background:var(--red-deep); }
-.pin-pad{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  max-width:260px;
-  margin:0 auto;
-}
-.pin-key{
-  padding:16px 0;
-  font-size:20px;
-  font-weight:700;
-  border-radius:10px;
-  border:1.5px solid #ddd;
-  background:#fff;
-  cursor:pointer;
-  font-family:'JetBrains Mono',monospace;
-}
-.pin-key:active{ background:var(--cream); }
-.pin-error{
-  text-align:center;
-  color:var(--red);
-  font-size:13px;
-  height:18px;
-  margin-top:6px;
-}
-
-/* settings form */
-.field-row{
-  display:flex; gap:8px; margin-bottom:10px;
-}
-.field-row input[type=text], .field-row input[type=number]{
-  font-family:'Zen Maru Gothic',sans-serif;
-  padding:8px 10px;
-  border-radius:8px;
-  border:1.5px solid #ddd;
-  font-size:14px;
-}
-.field-row input[type=text].name-input{ flex:2; min-width:0; }
-.field-row input.emoji-input{ flex:0 0 64px; text-align:center; font-size:18px; }
-.field-row input[type=number]{ flex:0 0 72px; }
-.field-row-name input.name-input{ flex:1; width:100%; }
-
-.prize-edit-list{ display:flex; flex-direction:column; gap:8px; margin:14px 0; }
-.prize-edit-row{
-  display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px;
-  background:var(--cream);
-  border-radius:10px;
-  padding:8px 10px;
-  font-size:13px;
-}
-.prize-edit-row .pe-top{
-  display:flex; align-items:center; gap:8px;
-  width:100%;
-}
-.prize-edit-row .pe-emoji{ font-size:20px; flex:0 0 auto; }
-.prize-edit-row .pe-name{ flex:1; min-width:0; font-weight:700; word-break:break-word; }
-.prize-edit-row .pe-bottom{
-  display:flex; align-items:center; gap:6px; flex-wrap:wrap;
-  width:100%;
-  padding-left:28px;
-}
-.prize-edit-row input[type=number]{ width:56px; padding:4px 6px; border-radius:6px; border:1px solid #ccc; }
-.prize-edit-row .del-btn{
-  background:none; border:none; color:var(--red); font-size:16px; cursor:pointer;
-  margin-left:auto;
-}
-.settings-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
-.settings-actions button{
-  flex:1;
-  min-width:120px;
-  padding:10px;
-  border-radius:10px;
-  border:none;
-  font-weight:700;
-  font-family:'Zen Maru Gothic',sans-serif;
-  cursor:pointer;
-  font-size:13px;
-}
-.btn-primary{ background:var(--red); color:#fff; }
-.btn-secondary{ background:#e8e2d2; color:var(--ink-deep); }
-.btn-danger{ background:none; color:var(--red); border:1.5px solid var(--red) !important; }
-
-.small-label{ font-size:12px; color:#777; margin:2px 0 8px; }
-
-@media (prefers-reduced-motion: reduce){
-  .drum-svg.spinning{ animation:none; }
-  .confetti-piece{ animation:none; display:none; }
-  .ball-pop.pop-anim{ animation:none; }
-}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -451,7 +12,7 @@ body{
 
   <div class="booth-header">
     <button class="icon-btn" id="muteBtn" title="音のオン/オフ">🔊</button>
-    <button class="icon-btn" id="gearBtn" title="設定">⚙️</button>
+    <a class="icon-btn" id="adminLink" href="admin.html" title="スタッフ設定">⚙️</a>
     <div class="noren-title">ガラガラ抽選会</div>
     <div class="center-name" id="centerNameLabel"></div>
   </div>
@@ -497,99 +58,16 @@ body{
     <ul id="historyList"></ul>
   </section>
 
-</div>
-
-<!-- PIN modal -->
-<div class="modal-overlay" id="pinOverlay" hidden>
-  <div class="modal-box">
-    <h2>スタッフ用設定（暗証番号）</h2>
-    <div class="pin-display" id="pinDisplay"></div>
-    <div class="pin-pad" id="pinPad"></div>
-    <div class="pin-error" id="pinError"></div>
-    <div class="settings-actions">
-      <button class="btn-secondary" id="pinCancelBtn">キャンセル</button>
-    </div>
+  <div class="staff-link-row">
+    <a href="admin.html">スタッフの方はこちら（景品の設定）</a>
   </div>
+
 </div>
 
-<!-- Settings modal -->
-<div class="modal-overlay" id="settingsOverlay" hidden>
-  <div class="modal-box">
-    <button class="close-x" id="settingsCloseBtn">✕</button>
-    <h2>抽選設定</h2>
-
-    <div class="small-label">センター名（画面上部に表示）</div>
-    <div class="field-row">
-      <input type="text" id="centerNameInput" class="name-input" placeholder="例）よみうりカルチャー自由が丘">
-    </div>
-
-    <div class="small-label">景品一覧（のこり数はその場で修正できます）</div>
-    <div class="prize-edit-list" id="prizeEditList"></div>
-
-    <div class="small-label">新しい景品を追加</div>
-    <div class="field-row field-row-name">
-      <input type="text" id="newName" class="name-input" placeholder="景品名（例：1等　商品券）">
-    </div>
-    <div class="field-row">
-      <input type="text" id="newEmoji" class="emoji-input" placeholder="絵文字" maxlength="4">
-      <input type="number" id="newQty" min="1" value="5" placeholder="数">
-    </div>
-    <div class="settings-actions">
-      <button class="btn-primary" id="addPrizeBtn">追加する</button>
-    </div>
-
-    <div class="settings-actions" style="margin-top:20px;">
-      <button class="btn-secondary" id="resetStockBtn">在庫をすべてリセット</button>
-      <button class="btn-danger" id="clearHistoryBtn">履歴を消去</button>
-    </div>
-    <div class="settings-actions">
-      <button class="btn-primary" id="saveSettingsBtn">保存して閉じる</button>
-    </div>
-  </div>
-</div>
-
+<script src="storage.js"></script>
 <script>
-const ADMIN_PIN = '1234'; // スタッフ用の暗証番号。変更したい場合はここを書き換えてください。
-const STORAGE_KEY = 'lottery-state-v1';
-
-let state = {
-  centerName: 'よみうりカルチャー自由が丘',
-  muted: false,
-  prizes: [
-    { id: 1, emoji:'🧸', name:'ぬいぐるみ', total:3, remaining:3 },
-    { id: 2, emoji:'🖊️', name:'すてきな文房具', total:10, remaining:10 },
-    { id: 3, emoji:'🍬', name:'おかしセット', total:20, remaining:20 },
-    { id: 4, emoji:'🎫', name:'また挑戦してね', total:9999, remaining:9999 },
-  ],
-  history: []
-};
-let nextId = 5;
-let pinBuffer = '';
+let state = loadLotteryState();
 let isSpinning = false;
-
-// ---------- storage ----------
-async function loadState(){
-  try{
-    const r = await window.storage.get(STORAGE_KEY, false);
-    if(r && r.value){
-      const parsed = JSON.parse(r.value);
-      state = Object.assign(state, parsed);
-      nextId = 1 + state.prizes.reduce((m,p)=>Math.max(m,p.id),0);
-    }
-  }catch(e){
-    // キーが無い場合はデフォルトのまま
-    console.log('初回起動のため初期データを使用します');
-  }
-  render();
-}
-async function saveState(){
-  try{
-    const result = await window.storage.set(STORAGE_KEY, JSON.stringify(state), false);
-    if(!result) console.error('保存に失敗しました');
-  }catch(e){
-    console.error('保存エラー', e);
-  }
-}
 
 // ---------- sound ----------
 let audioCtx = null;
@@ -652,9 +130,6 @@ function render(){
 
   document.getElementById('undoBtn').disabled = state.history.length === 0;
 }
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
 
 // ---------- drawing ----------
 function pickWeighted(pool){
@@ -705,7 +180,7 @@ async function draw(){
   void ballPop.offsetWidth; // reflow to restart animation
   ballPop.classList.add('pop-anim');
 
-  await saveState();
+  saveLotteryState(state);
   render();
 
   ticketBody.innerHTML = `
@@ -721,12 +196,12 @@ async function draw(){
   isSpinning = false;
 }
 
-async function undoLast(){
+function undoLast(){
   if(state.history.length === 0) return;
   const last = state.history.pop();
   const p = state.prizes.find(p=> p.name === last.name && p.emoji === last.emoji);
   if(p) p.remaining += 1;
-  await saveState();
+  saveLotteryState(state);
   render();
   document.getElementById('ticket').classList.remove('show');
 }
@@ -746,150 +221,23 @@ function launchConfetti(){
   }
 }
 
-// ---------- PIN modal ----------
-function buildPinPad(){
-  const pad = document.getElementById('pinPad');
-  pad.innerHTML = '';
-  const keys = ['1','2','3','4','5','6','7','8','9','消','0','決定'];
-  keys.forEach(k=>{
-    const b = document.createElement('button');
-    b.className = 'pin-key';
-    b.textContent = k;
-    b.addEventListener('click', ()=> onPinKey(k));
-    pad.appendChild(b);
-  });
-  updatePinDisplay();
-}
-function updatePinDisplay(){
-  const disp = document.getElementById('pinDisplay');
-  disp.innerHTML = '';
-  for(let i=0;i<4;i++){
-    const dot = document.createElement('div');
-    dot.className = 'pin-dot' + (i < pinBuffer.length ? ' filled':'');
-    disp.appendChild(dot);
-  }
-}
-function onPinKey(k){
-  const err = document.getElementById('pinError');
-  err.textContent = '';
-  if(k === '消'){ pinBuffer = pinBuffer.slice(0,-1); updatePinDisplay(); return; }
-  if(k === '決定'){
-    if(pinBuffer === ADMIN_PIN){
-      pinBuffer = '';
-      closePinModal();
-      openSettingsModal();
-    }else{
-      err.textContent = '暗証番号が違います';
-      pinBuffer = '';
-      updatePinDisplay();
-    }
-    return;
-  }
-  if(pinBuffer.length < 4){
-    pinBuffer += k;
-    updatePinDisplay();
-  }
-}
-function openPinModal(){
-  pinBuffer = '';
-  document.getElementById('pinError').textContent = '';
-  buildPinPad();
-  document.getElementById('pinOverlay').hidden = false;
-}
-function closePinModal(){
-  document.getElementById('pinOverlay').hidden = true;
-}
-
-// ---------- settings modal ----------
-function openSettingsModal(){
-  document.getElementById('centerNameInput').value = state.centerName;
-  renderPrizeEditList();
-  document.getElementById('settingsOverlay').hidden = false;
-}
-function closeSettingsModal(){
-  document.getElementById('settingsOverlay').hidden = true;
-}
-function renderPrizeEditList(){
-  const list = document.getElementById('prizeEditList');
-  list.innerHTML = '';
-  state.prizes.forEach(p=>{
-    const row = document.createElement('div');
-    row.className = 'prize-edit-row';
-    row.innerHTML = `
-      <div class="pe-top">
-        <span class="pe-emoji">${p.emoji||'🎁'}</span>
-        <span class="pe-name">${escapeHtml(p.name)}</span>
-        <button class="del-btn" data-del="${p.id}" title="削除">🗑️</button>
-      </div>
-      <div class="pe-bottom">
-        のこり <input type="number" min="0" value="${p.remaining}" data-id="${p.id}" data-field="remaining">
-        / 総数 <input type="number" min="0" value="${p.total}" data-id="${p.id}" data-field="total">
-      </div>
-    `;
-    list.appendChild(row);
-  });
-  list.querySelectorAll('input[type=number]').forEach(inp=>{
-    inp.addEventListener('change', e=>{
-      const id = Number(e.target.dataset.id);
-      const field = e.target.dataset.field;
-      const p = state.prizes.find(p=>p.id===id);
-      if(p) p[field] = Math.max(0, Number(e.target.value)||0);
-    });
-  });
-  list.querySelectorAll('.del-btn').forEach(btn=>{
-    btn.addEventListener('click', e=>{
-      const id = Number(e.target.dataset.del);
-      state.prizes = state.prizes.filter(p=>p.id!==id);
-      renderPrizeEditList();
-    });
-  });
-}
-
-function addPrizeFromForm(){
-  const emoji = document.getElementById('newEmoji').value.trim() || '🎁';
-  const name = document.getElementById('newName').value.trim();
-  const qty = Math.max(1, Number(document.getElementById('newQty').value)||1);
-  if(!name){ alert('景品名を入力してください'); return; }
-  state.prizes.push({ id: nextId++, emoji, name, total: qty, remaining: qty });
-  document.getElementById('newEmoji').value = '';
-  document.getElementById('newName').value = '';
-  document.getElementById('newQty').value = 5;
-  renderPrizeEditList();
-}
-
-async function saveSettingsAndClose(){
-  state.centerName = document.getElementById('centerNameInput').value.trim() || 'ガラガラ抽選会';
-  await saveState();
-  render();
-  closeSettingsModal();
-}
-
-// ---------- init / events ----------
 document.getElementById('spinBtn').addEventListener('click', draw);
 document.getElementById('undoBtn').addEventListener('click', undoLast);
-document.getElementById('gearBtn').addEventListener('click', openPinModal);
-document.getElementById('pinCancelBtn').addEventListener('click', closePinModal);
-document.getElementById('settingsCloseBtn').addEventListener('click', closeSettingsModal);
-document.getElementById('saveSettingsBtn').addEventListener('click', saveSettingsAndClose);
-document.getElementById('addPrizeBtn').addEventListener('click', addPrizeFromForm);
-document.getElementById('resetStockBtn').addEventListener('click', ()=>{
-  if(confirm('すべての景品の「のこり数」を総数にリセットします。よろしいですか？')){
-    state.prizes.forEach(p=> p.remaining = p.total);
-    renderPrizeEditList();
-  }
-});
-document.getElementById('clearHistoryBtn').addEventListener('click', ()=>{
-  if(confirm('抽選履歴をすべて消去します。よろしいですか？')){
-    state.history = [];
-  }
-});
-document.getElementById('muteBtn').addEventListener('click', async ()=>{
+document.getElementById('muteBtn').addEventListener('click', ()=>{
   state.muted = !state.muted;
-  await saveState();
+  saveLotteryState(state);
   render();
 });
 
-loadState();
+// 別タブ（例：スタッフが admin.html で編集中）での変更を反映
+window.addEventListener('storage', (e)=>{
+  if(e.key === LOTTERY_STORAGE_KEY){
+    state = loadLotteryState();
+    render();
+  }
+});
+
+render();
 </script>
 </body>
 </html>
