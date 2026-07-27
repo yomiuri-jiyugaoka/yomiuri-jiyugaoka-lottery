@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>抽選会 - スタッフ設定</title>
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -28,8 +29,11 @@
       <div class="field-row">
         <input type="text" id="centerNameInput" class="name-input" placeholder="例）よみうりカルチャー自由が丘">
       </div>
+      <div class="settings-actions">
+        <button class="btn-primary" id="saveCenterNameBtn">センター名を保存</button>
+      </div>
 
-      <div class="small-label">景品一覧（のこり数はその場で修正できます）</div>
+      <div class="small-label">景品一覧（数字を変えると自動的に保存されます）</div>
       <div class="prize-edit-list" id="prizeEditList"></div>
 
       <div class="small-label">新しい景品を追加</div>
@@ -48,18 +52,14 @@
         <button class="btn-secondary" id="resetStockBtn">在庫をすべてリセット</button>
         <button class="btn-danger" id="clearHistoryBtn">履歴を消去</button>
       </div>
-      <div class="settings-actions">
-        <button class="btn-primary" id="saveSettingsBtn">保存する</button>
-      </div>
       <div class="save-toast" id="saveToast"></div>
     </div>
   </div>
 </div>
 
-<script src="storage.js"></script>
+<script src="supabase-client.js"></script>
 <script>
 const ADMIN_PIN = '1234'; // スタッフ用の暗証番号。変更したい場合はここを書き換えてください。
-let state = loadLotteryState();
 let pinBuffer = '';
 
 // ---------- PIN ----------
@@ -109,14 +109,24 @@ function onPinKey(k){
 }
 
 // ---------- settings ----------
-function openSettingsScreen(){
-  document.getElementById('centerNameInput').value = state.centerName;
-  renderPrizeEditList();
+async function openSettingsScreen(){
+  const settings = await fetchSettings();
+  document.getElementById('centerNameInput').value = settings.center_name;
+  await renderPrizeEditList();
+  subscribeLotteryRealtime({ onPrizesChange: renderPrizeEditList, onHistoryChange: ()=>{} });
 }
-function renderPrizeEditList(){
+
+function showToast(msg){
+  const t = document.getElementById('saveToast');
+  t.textContent = msg;
+  setTimeout(()=>{ if(t.textContent===msg) t.textContent=''; }, 2500);
+}
+
+async function renderPrizeEditList(){
+  const prizes = await fetchPrizes();
   const list = document.getElementById('prizeEditList');
   list.innerHTML = '';
-  state.prizes.forEach(p=>{
+  prizes.forEach(p=>{
     const row = document.createElement('div');
     row.className = 'prize-edit-row';
     row.innerHTML = `
@@ -133,58 +143,59 @@ function renderPrizeEditList(){
     list.appendChild(row);
   });
   list.querySelectorAll('input[type=number]').forEach(inp=>{
-    inp.addEventListener('change', e=>{
+    inp.addEventListener('change', async e=>{
       const id = Number(e.target.dataset.id);
       const field = e.target.dataset.field;
-      const p = state.prizes.find(p=>p.id===id);
-      if(p) p[field] = Math.max(0, Number(e.target.value)||0);
+      const value = Math.max(0, Number(e.target.value)||0);
+      const { error } = await supabaseClient.from('lottery_prizes').update({ [field]: value }).eq('id', id);
+      showToast(error ? '保存に失敗しました' : '保存しました✅');
     });
   });
   list.querySelectorAll('.del-btn').forEach(btn=>{
-    btn.addEventListener('click', e=>{
+    btn.addEventListener('click', async e=>{
       const id = Number(e.target.dataset.del);
-      state.prizes = state.prizes.filter(p=>p.id!==id);
+      if(!confirm('この景品を削除します。よろしいですか？')) return;
+      const { error } = await supabaseClient.from('lottery_prizes').delete().eq('id', id);
+      if(error){ showToast('削除に失敗しました'); return; }
       renderPrizeEditList();
     });
   });
 }
 
-function addPrizeFromForm(){
+async function addPrizeFromForm(){
   const emoji = document.getElementById('newEmoji').value.trim() || '🎁';
   const name = document.getElementById('newName').value.trim();
   const qty = Math.max(1, Number(document.getElementById('newQty').value)||1);
   if(!name){ alert('景品名を入力してください'); return; }
-  state.prizes.push({ id: nextPrizeId(state), emoji, name, total: qty, remaining: qty });
+  const { error } = await supabaseClient.from('lottery_prizes').insert({ emoji, name, total: qty, remaining: qty });
+  if(error){ showToast('追加に失敗しました'); return; }
   document.getElementById('newEmoji').value = '';
   document.getElementById('newName').value = '';
   document.getElementById('newQty').value = 5;
   renderPrizeEditList();
 }
 
-function showToast(msg){
-  const t = document.getElementById('saveToast');
-  t.textContent = msg;
-  setTimeout(()=>{ if(t.textContent===msg) t.textContent=''; }, 2500);
-}
-
-function saveSettings(){
-  state.centerName = document.getElementById('centerNameInput').value.trim() || 'ガラガラ抽選会';
-  const ok = saveLotteryState(state);
-  showToast(ok ? '保存しました✅' : '保存に失敗しました');
+async function saveCenterName(){
+  const centerName = document.getElementById('centerNameInput').value.trim() || 'ガラガラ抽選会';
+  const { error } = await supabaseClient.from('lottery_settings').update({ center_name: centerName }).eq('id', 1);
+  showToast(error ? '保存に失敗しました' : '保存しました✅');
 }
 
 document.getElementById('addPrizeBtn').addEventListener('click', addPrizeFromForm);
-document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
-document.getElementById('resetStockBtn').addEventListener('click', ()=>{
-  if(confirm('すべての景品の「のこり数」を総数にリセットします。よろしいですか？')){
-    state.prizes.forEach(p=> p.remaining = p.total);
-    renderPrizeEditList();
+document.getElementById('saveCenterNameBtn').addEventListener('click', saveCenterName);
+document.getElementById('resetStockBtn').addEventListener('click', async ()=>{
+  if(!confirm('すべての景品の「のこり数」を総数にリセットします。よろしいですか？')) return;
+  const prizes = await fetchPrizes();
+  for(const p of prizes){
+    await supabaseClient.from('lottery_prizes').update({ remaining: p.total }).eq('id', p.id);
   }
+  showToast('リセットしました✅');
+  renderPrizeEditList();
 });
-document.getElementById('clearHistoryBtn').addEventListener('click', ()=>{
-  if(confirm('抽選履歴をすべて消去します。よろしいですか？')){
-    state.history = [];
-  }
+document.getElementById('clearHistoryBtn').addEventListener('click', async ()=>{
+  if(!confirm('抽選履歴をすべて消去します。よろしいですか？')) return;
+  const { error } = await supabaseClient.from('lottery_history').delete().gte('id', 0);
+  showToast(error ? '消去に失敗しました' : '消去しました✅');
 });
 
 buildPinPad();

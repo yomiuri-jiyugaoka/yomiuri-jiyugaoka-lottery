@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ガラガラ抽選会</title>
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -46,7 +47,6 @@
   </div>
 
   <button class="spin-btn" id="spinBtn">ガラガラ回す！</button>
-  <button class="undo-btn" id="undoBtn">直前の結果を取り消す</button>
 
   <section style="width:100%">
     <div class="board-title">景品のこりすう</div>
@@ -54,7 +54,7 @@
   </section>
 
   <section class="history">
-    <div class="board-title">抽選履歴（最新10件）</div>
+    <div class="board-title">抽選履歴（最新3件）</div>
     <ul id="historyList"></ul>
   </section>
 
@@ -64,9 +64,9 @@
 
 </div>
 
-<script src="storage.js"></script>
+<script src="supabase-client.js"></script>
 <script>
-let state = loadLotteryState();
+let muted = loadMuted();
 let isSpinning = false;
 
 // ---------- sound ----------
@@ -76,7 +76,7 @@ function ctx(){
   return audioCtx;
 }
 function beep(freq, start, dur, type='sine', vol=0.18){
-  if(state.muted) return;
+  if(muted) return;
   const c = ctx();
   const o = c.createOscillator();
   const g = c.createGain();
@@ -103,13 +103,11 @@ function playEmpty(){
 }
 
 // ---------- render ----------
-function render(){
-  document.getElementById('centerNameLabel').textContent = state.centerName;
-  document.getElementById('muteBtn').textContent = state.muted ? '🔇' : '🔊';
-
+async function renderPrizes(){
+  const prizes = await fetchPrizes();
   const board = document.getElementById('prizeBoard');
   board.innerHTML = '';
-  state.prizes.forEach(p=>{
+  prizes.forEach(p=>{
     const card = document.createElement('div');
     card.className = 'prize-card' + (p.remaining<=0 ? ' depleted':'');
     card.innerHTML = `
@@ -119,32 +117,29 @@ function render(){
     `;
     board.appendChild(card);
   });
+}
 
+async function renderHistory(){
+  const history = await fetchHistory(3);
   const hist = document.getElementById('historyList');
   hist.innerHTML = '';
-  state.history.slice(-10).reverse().forEach(h=>{
+  history.forEach(h=>{
+    const d = new Date(h.drawn_at);
+    const time = d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
     const li = document.createElement('li');
-    li.innerHTML = `<span>${h.emoji} ${escapeHtml(h.name)}</span><span class="time mono">${h.time}</span>`;
+    li.innerHTML = `<span>${h.emoji||''} ${escapeHtml(h.name)}</span><span class="time mono">${time}</span>`;
     hist.appendChild(li);
   });
+}
 
-  document.getElementById('undoBtn').disabled = state.history.length === 0;
+async function renderCenterName(){
+  const settings = await fetchSettings();
+  document.getElementById('centerNameLabel').textContent = settings.center_name;
 }
 
 // ---------- drawing ----------
-function pickWeighted(pool){
-  const totalW = pool.reduce((s,p)=>s+p.remaining,0);
-  let r = Math.random()*totalW;
-  for(const p of pool){
-    if(r < p.remaining) return p;
-    r -= p.remaining;
-  }
-  return pool[pool.length-1];
-}
-
 async function draw(){
   if(isSpinning) return;
-  const pool = state.prizes.filter(p=>p.remaining>0);
   const spinBtn = document.getElementById('spinBtn');
   const drum = document.getElementById('drumSvg');
   const ticket = document.getElementById('ticket');
@@ -152,58 +147,49 @@ async function draw(){
   const ballPop = document.getElementById('ballPop');
 
   ticket.classList.remove('show');
-
-  if(pool.length === 0){
-    playEmpty();
-    ticketBody.innerHTML = `<div class="empty-msg">すべての景品が終了しました🙏<br>スタッフまでお声がけください</div>`;
-    requestAnimationFrame(()=> ticket.classList.add('show'));
-    return;
-  }
-
   isSpinning = true;
   spinBtn.disabled = true;
   spinBtn.textContent = 'まわしています…';
   drum.classList.add('spinning');
   playTumble();
 
-  await new Promise(res=> setTimeout(res, 1600));
-
-  const winner = pickWeighted(pool);
-  winner.remaining -= 1;
-
-  const now = new Date();
-  const time = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  state.history.push({ name: winner.name, emoji: winner.emoji, time });
+  const resultPromise = drawPrizeRemote();
+  const minWait = new Promise(res=> setTimeout(res, 1600));
+  const [result] = await Promise.all([resultPromise, minWait]);
 
   drum.classList.remove('spinning');
+  spinBtn.disabled = false;
+  spinBtn.textContent = 'ガラガラ回す！';
+  isSpinning = false;
+
+  if(!result){
+    ticketBody.innerHTML = `<div class="empty-msg">通信エラーが発生しました。もう一度お試しください。</div>`;
+    requestAnimationFrame(()=> ticket.classList.add('show'));
+    return;
+  }
+
+  if(result.soldOut){
+    playEmpty();
+    ticketBody.innerHTML = `<div class="empty-msg">すべての景品が終了しました🙏<br>スタッフまでお声がけください</div>`;
+    requestAnimationFrame(()=> ticket.classList.add('show'));
+    return;
+  }
+
   ballPop.classList.remove('pop-anim');
-  void ballPop.offsetWidth; // reflow to restart animation
+  void ballPop.offsetWidth;
   ballPop.classList.add('pop-anim');
 
-  saveLotteryState(state);
-  render();
-
   ticketBody.innerHTML = `
-    <div class="emoji">${winner.emoji||'🎁'}</div>
-    <div class="prize-name">${escapeHtml(winner.name)}</div>
+    <div class="emoji">${result.emoji||'🎁'}</div>
+    <div class="prize-name">${escapeHtml(result.name)}</div>
   `;
   requestAnimationFrame(()=> ticket.classList.add('show'));
   playFanfare();
   launchConfetti();
 
-  spinBtn.disabled = false;
-  spinBtn.textContent = 'ガラガラ回す！';
-  isSpinning = false;
-}
-
-function undoLast(){
-  if(state.history.length === 0) return;
-  const last = state.history.pop();
-  const p = state.prizes.find(p=> p.name === last.name && p.emoji === last.emoji);
-  if(p) p.remaining += 1;
-  saveLotteryState(state);
-  render();
-  document.getElementById('ticket').classList.remove('show');
+  // 自分の画面はすぐ更新（他の端末はRealtime経由で自動更新されます）
+  renderPrizes();
+  renderHistory();
 }
 
 function launchConfetti(){
@@ -222,22 +208,22 @@ function launchConfetti(){
 }
 
 document.getElementById('spinBtn').addEventListener('click', draw);
-document.getElementById('undoBtn').addEventListener('click', undoLast);
 document.getElementById('muteBtn').addEventListener('click', ()=>{
-  state.muted = !state.muted;
-  saveLotteryState(state);
-  render();
+  muted = !muted;
+  saveMuted(muted);
+  document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
 });
 
-// 別タブ（例：スタッフが admin.html で編集中）での変更を反映
-window.addEventListener('storage', (e)=>{
-  if(e.key === LOTTERY_STORAGE_KEY){
-    state = loadLotteryState();
-    render();
-  }
+document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
+
+subscribeLotteryRealtime({
+  onPrizesChange: renderPrizes,
+  onHistoryChange: renderHistory
 });
 
-render();
+renderCenterName();
+renderPrizes();
+renderHistory();
 </script>
 </body>
 </html>
