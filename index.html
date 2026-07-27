@@ -392,22 +392,33 @@ body{
   font-size:14px;
 }
 .field-row input[type=text].name-input{ flex:2; min-width:0; }
-.field-row input.emoji-input{ flex:0 0 54px; text-align:center; font-size:18px; }
-.field-row input[type=number]{ flex:0 0 64px; }
+.field-row input.emoji-input{ flex:0 0 64px; text-align:center; font-size:18px; }
+.field-row input[type=number]{ flex:0 0 72px; }
+.field-row-name input.name-input{ flex:1; width:100%; }
 
 .prize-edit-list{ display:flex; flex-direction:column; gap:8px; margin:14px 0; }
 .prize-edit-row{
-  display:flex; align-items:center; gap:8px;
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px;
   background:var(--cream);
   border-radius:10px;
   padding:8px 10px;
   font-size:13px;
 }
-.prize-edit-row .pe-emoji{ font-size:20px; }
-.prize-edit-row .pe-name{ flex:1; font-weight:700; }
+.prize-edit-row .pe-top{
+  display:flex; align-items:center; gap:8px;
+  width:100%;
+}
+.prize-edit-row .pe-emoji{ font-size:20px; flex:0 0 auto; }
+.prize-edit-row .pe-name{ flex:1; min-width:0; font-weight:700; word-break:break-word; }
+.prize-edit-row .pe-bottom{
+  display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+  width:100%;
+  padding-left:28px;
+}
 .prize-edit-row input[type=number]{ width:56px; padding:4px 6px; border-radius:6px; border:1px solid #ccc; }
 .prize-edit-row .del-btn{
   background:none; border:none; color:var(--red); font-size:16px; cursor:pointer;
+  margin-left:auto;
 }
 .settings-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
 .settings-actions button{
@@ -516,9 +527,11 @@ body{
     <div class="prize-edit-list" id="prizeEditList"></div>
 
     <div class="small-label">新しい景品を追加</div>
+    <div class="field-row field-row-name">
+      <input type="text" id="newName" class="name-input" placeholder="景品名（例：1等　商品券）">
+    </div>
     <div class="field-row">
       <input type="text" id="newEmoji" class="emoji-input" placeholder="絵文字" maxlength="4">
-      <input type="text" id="newName" class="name-input" placeholder="景品名">
       <input type="number" id="newQty" min="1" value="5" placeholder="数">
     </div>
     <div class="settings-actions">
@@ -803,11 +816,15 @@ function renderPrizeEditList(){
     const row = document.createElement('div');
     row.className = 'prize-edit-row';
     row.innerHTML = `
-      <span class="pe-emoji">${p.emoji||'🎁'}</span>
-      <span class="pe-name">${escapeHtml(p.name)}</span>
-      のこり <input type="number" min="0" value="${p.remaining}" data-id="${p.id}" data-field="remaining">
-      / 総数 <input type="number" min="0" value="${p.total}" data-id="${p.id}" data-field="total">
-      <button class="del-btn" data-del="${p.id}" title="削除">🗑️</button>
+      <div class="pe-top">
+        <span class="pe-emoji">${p.emoji||'🎁'}</span>
+        <span class="pe-name">${escapeHtml(p.name)}</span>
+        <button class="del-btn" data-del="${p.id}" title="削除">🗑️</button>
+      </div>
+      <div class="pe-bottom">
+        のこり <input type="number" min="0" value="${p.remaining}" data-id="${p.id}" data-field="remaining">
+        / 総数 <input type="number" min="0" value="${p.total}" data-id="${p.id}" data-field="total">
+      </div>
     `;
     list.appendChild(row);
   });
