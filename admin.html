@@ -138,9 +138,9 @@ async function renderPrizeEditList(){
     row.innerHTML = `
       <div class="pe-top">
         <span class="pe-emoji">${p.emoji||'🎁'}</span>
-        <span class="pe-name">${escapeHtml(p.name)}</span>
-        <button class="order-btn" data-move="up" data-id="${p.id}" title="上に移動" ${idx===0?'disabled':''}>↑</button>
-        <button class="order-btn" data-move="down" data-id="${p.id}" title="下に移動" ${idx===prizes.length-1?'disabled':''}>↓</button>
+        <span class="pe-name">${escapeHtml(p.name)}${p.rank_tier ? ' <span class="pe-lock" title="ランク設定により順番固定">🔒</span>' : ''}</span>
+        <button class="order-btn" data-move="up" data-id="${p.id}" title="${p.rank_tier ? 'ランク設定中は順番を固定しています':'上に移動'}" ${(idx===0 || p.rank_tier)?'disabled':''}>↑</button>
+        <button class="order-btn" data-move="down" data-id="${p.id}" title="${p.rank_tier ? 'ランク設定中は順番を固定しています':'下に移動'}" ${(idx===prizes.length-1 || p.rank_tier)?'disabled':''}>↓</button>
         <button class="del-btn" data-del="${p.id}" title="削除">🗑️</button>
       </div>
       <div class="pe-bottom">

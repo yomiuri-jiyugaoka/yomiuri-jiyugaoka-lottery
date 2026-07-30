@@ -516,6 +516,7 @@ body{
   flex:0 0 auto;
 }
 .prize-edit-row .order-btn:disabled{ opacity:.3; cursor:not-allowed; }
+.prize-edit-row .pe-lock{ font-size:12px; opacity:.7; }
 .settings-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
 .settings-actions button{
   flex:1;
