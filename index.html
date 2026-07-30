@@ -20,6 +20,11 @@
 
   <div class="drum-wrap">
     <div class="drum-frame">
+      <span class="sparkle sp1">✨</span>
+      <span class="sparkle sp2">⭐</span>
+      <span class="sparkle sp3">✨</span>
+      <span class="sparkle sp4">🎉</span>
+      <span class="sparkle sp5">⭐</span>
       <svg class="drum-svg" id="drumSvg" viewBox="0 0 200 200">
         <circle cx="100" cy="100" r="92" fill="#d1373f" stroke="#8f1f27" stroke-width="6"/>
         <circle cx="100" cy="100" r="92" fill="none" stroke="#f6c85f" stroke-width="4" stroke-dasharray="6 10"/>
@@ -49,7 +54,6 @@
   <button class="spin-btn" id="spinBtn">ガラガラ回す！</button>
 
   <section style="width:100%">
-    <div class="board-title">景品のこりすう</div>
     <div class="prize-board" id="prizeBoard"></div>
   </section>
 
@@ -109,11 +113,13 @@ async function renderPrizes(){
   board.innerHTML = '';
   prizes.forEach(p=>{
     const card = document.createElement('div');
-    card.className = 'prize-card' + (p.remaining<=0 ? ' depleted':'');
+    const rankClass = p.rank_tier ? ` rank-${p.rank_tier}` : '';
+    card.className = 'prize-card' + (p.remaining<=0 ? ' depleted':'') + rankClass;
+    const badge = p.rank_tier ? `<div class="rank-badge">${p.rank_tier===1?'🏆':p.rank_tier===2?'🥈':'🥉'}${p.rank_tier}等</div>` : '';
     card.innerHTML = `
+      ${badge}
       <div class="p-emoji">${p.emoji||'🎁'}</div>
       <div class="p-name">${escapeHtml(p.name)}</div>
-      <div class="p-count">${p.remaining>0 ? '受付中' : '終了しました'}</div>
     `;
     board.appendChild(card);
   });
@@ -125,9 +131,10 @@ async function renderHistory(){
   hist.innerHTML = '';
   history.forEach(h=>{
     const d = new Date(h.drawn_at);
+    const dateStr = (d.getMonth()+1)+'/'+d.getDate();
     const time = d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
     const li = document.createElement('li');
-    li.innerHTML = `<span>${h.emoji||''} ${escapeHtml(h.name)}</span><span class="time mono">${time}</span>`;
+    li.innerHTML = `<span>${h.emoji||''} ${escapeHtml(h.name)}</span><span class="time mono">${dateStr} ${time}</span>`;
     hist.appendChild(li);
   });
 }
@@ -179,23 +186,28 @@ async function draw(){
   void ballPop.offsetWidth;
   ballPop.classList.add('pop-anim');
 
+  ticket.classList.remove('rank-1','rank-2','rank-3');
+  const rankBadge = result.rankTier ? `<div class="ticket-rank-badge">${result.rankTier===1?'🏆 1等 🏆':result.rankTier===2?'🥈 2等 🥈':'🥉 3等 🥉'}</div>` : '';
+  if(result.rankTier) ticket.classList.add('rank-'+result.rankTier);
+
   ticketBody.innerHTML = `
+    ${rankBadge}
     <div class="emoji">${result.emoji||'🎁'}</div>
     <div class="prize-name">${escapeHtml(result.name)}</div>
   `;
   requestAnimationFrame(()=> ticket.classList.add('show'));
   playFanfare();
-  launchConfetti();
+  launchConfetti(result.rankTier ? 70 : 34);
 
   // 自分の画面はすぐ更新（他の端末はRealtime経由で自動更新されます）
   renderPrizes();
   renderHistory();
 }
 
-function launchConfetti(){
+function launchConfetti(count){
   const colors = ['#c8353f','#e8a93a','#f6c85f','#4a7c59','#fffaf2'];
-  const count = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 34;
-  for(let i=0;i<count;i++){
+  const total = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : (count||34);
+  for(let i=0;i<total;i++){
     const el = document.createElement('div');
     el.className = 'confetti-piece';
     el.style.left = Math.random()*100+'vw';

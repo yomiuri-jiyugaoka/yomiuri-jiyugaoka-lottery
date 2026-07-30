@@ -43,6 +43,12 @@
       <div class="field-row">
         <input type="text" id="newEmoji" class="emoji-input" placeholder="絵文字" maxlength="4">
         <input type="number" id="newQty" min="1" value="5" placeholder="数">
+        <select id="newRank" class="rank-select">
+          <option value="">ランクなし</option>
+          <option value="1">🏆 1等</option>
+          <option value="2">🥈 2等</option>
+          <option value="3">🥉 3等</option>
+        </select>
       </div>
       <div class="settings-actions">
         <button class="btn-primary" id="addPrizeBtn">追加する</button>
@@ -138,6 +144,12 @@ async function renderPrizeEditList(){
       <div class="pe-bottom">
         のこり <input type="number" min="0" value="${p.remaining}" data-id="${p.id}" data-field="remaining">
         / 総数 <input type="number" min="0" value="${p.total}" data-id="${p.id}" data-field="total">
+        <select class="rank-select" data-id="${p.id}" data-field="rank_tier">
+          <option value="" ${!p.rank_tier?'selected':''}>ランクなし</option>
+          <option value="1" ${p.rank_tier===1?'selected':''}>🏆 1等</option>
+          <option value="2" ${p.rank_tier===2?'selected':''}>🥈 2等</option>
+          <option value="3" ${p.rank_tier===3?'selected':''}>🥉 3等</option>
+        </select>
       </div>
     `;
     list.appendChild(row);
@@ -148,6 +160,14 @@ async function renderPrizeEditList(){
       const field = e.target.dataset.field;
       const value = Math.max(0, Number(e.target.value)||0);
       const { error } = await supabaseClient.from('lottery_prizes').update({ [field]: value }).eq('id', id);
+      showToast(error ? '保存に失敗しました' : '保存しました✅');
+    });
+  });
+  list.querySelectorAll('select.rank-select').forEach(sel=>{
+    sel.addEventListener('change', async e=>{
+      const id = Number(e.target.dataset.id);
+      const value = e.target.value ? Number(e.target.value) : null;
+      const { error } = await supabaseClient.from('lottery_prizes').update({ rank_tier: value }).eq('id', id);
       showToast(error ? '保存に失敗しました' : '保存しました✅');
     });
   });
@@ -166,12 +186,15 @@ async function addPrizeFromForm(){
   const emoji = document.getElementById('newEmoji').value.trim() || '🎁';
   const name = document.getElementById('newName').value.trim();
   const qty = Math.max(1, Number(document.getElementById('newQty').value)||1);
+  const rankVal = document.getElementById('newRank').value;
+  const rank_tier = rankVal ? Number(rankVal) : null;
   if(!name){ alert('景品名を入力してください'); return; }
-  const { error } = await supabaseClient.from('lottery_prizes').insert({ emoji, name, total: qty, remaining: qty });
+  const { error } = await supabaseClient.from('lottery_prizes').insert({ emoji, name, total: qty, remaining: qty, rank_tier });
   if(error){ showToast('追加に失敗しました'); return; }
   document.getElementById('newEmoji').value = '';
   document.getElementById('newName').value = '';
   document.getElementById('newQty').value = 5;
+  document.getElementById('newRank').value = '';
   renderPrizeEditList();
 }
 

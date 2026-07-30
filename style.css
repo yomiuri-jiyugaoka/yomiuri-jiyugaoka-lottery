@@ -101,14 +101,50 @@ body{
 }
 .drum-frame{
   position:relative;
+  z-index:0;
   width:min(78vw,300px);
   aspect-ratio:1/1;
+}
+.drum-frame::after{
+  content:'';
+  position:absolute;
+  inset:-16px;
+  border-radius:50%;
+  background: conic-gradient(from 0deg, #e8a93a, #c8353f, #4a7c59, #f6c85f, #e8a93a);
+  filter: blur(16px);
+  opacity:.5;
+  z-index:-1;
+  animation: rotate-glow 7s linear infinite;
+}
+@keyframes rotate-glow{ to{ transform:rotate(360deg); } }
+
+.sparkle{
+  position:absolute;
+  font-size:20px;
+  z-index:2;
+  pointer-events:none;
+  animation: twinkle 2.4s ease-in-out infinite;
+}
+.sparkle.sp1{ top:-6px; left:6%; animation-delay:0s; }
+.sparkle.sp2{ top:14%; right:-8px; animation-delay:.5s; font-size:16px; }
+.sparkle.sp3{ bottom:6%; left:-10px; animation-delay:1s; font-size:16px; }
+.sparkle.sp4{ bottom:-8px; right:12%; animation-delay:1.5s; }
+.sparkle.sp5{ top:40%; left:-14px; animation-delay:.8s; font-size:14px; }
+@keyframes twinkle{
+  0%,100%{ opacity:0; transform:scale(.5) rotate(0deg); }
+  50%{ opacity:1; transform:scale(1.15) rotate(15deg); }
 }
 .drum-svg{
   width:100%;
   height:100%;
   filter:drop-shadow(0 10px 18px rgba(0,0,0,.4));
   transition: transform .1s linear;
+  animation: idle-wobble 3.2s ease-in-out infinite;
+}
+@keyframes idle-wobble{
+  0%,100%{ transform:rotate(0deg) translateY(0); }
+  25%{ transform:rotate(-4deg) translateY(-4px); }
+  75%{ transform:rotate(4deg) translateY(-4px); }
 }
 .drum-svg.spinning{
   animation: spin-drum 0.55s linear infinite;
@@ -172,6 +208,24 @@ body{
   max-height:300px;
   padding:22px 20px;
 }
+.ticket.rank-1{
+  border-color:var(--gold-bright);
+  box-shadow:0 0 0 4px rgba(246,200,95,.35), 0 0 30px rgba(246,200,95,.5);
+  animation: ticket-glow 1.4s ease-in-out infinite;
+}
+.ticket.rank-2{ border-color:#b9c4d1; box-shadow:0 0 0 4px rgba(185,196,209,.3); }
+.ticket.rank-3{ border-color:#cd8a5a; box-shadow:0 0 0 4px rgba(205,138,90,.3); }
+@keyframes ticket-glow{
+  0%,100%{ box-shadow:0 0 0 4px rgba(246,200,95,.35), 0 0 30px rgba(246,200,95,.5); }
+  50%{ box-shadow:0 0 0 6px rgba(246,200,95,.5), 0 0 45px rgba(246,200,95,.7); }
+}
+.ticket-rank-badge{
+  font-size:14px;
+  font-weight:900;
+  color:var(--red-deep);
+  margin-bottom:4px;
+  letter-spacing:.05em;
+}
 .ticket .label{
   font-size:13px;
   letter-spacing:.2em;
@@ -209,6 +263,11 @@ body{
   transition:transform .08s ease, box-shadow .08s ease;
 }
 .spin-btn:hover:not(:disabled){ filter:brightness(1.06); }
+.spin-btn:not(:disabled){ animation: invite-pulse 1.8s ease-in-out infinite; }
+@keyframes invite-pulse{
+  0%,100%{ transform:scale(1); }
+  50%{ transform:scale(1.035); }
+}
 .spin-btn:active:not(:disabled){
   transform:translateY(4px);
   box-shadow:0 2px 0 #7d1c23, 0 4px 10px rgba(0,0,0,.35);
@@ -247,6 +306,23 @@ body{
   position:relative;
 }
 .prize-card.depleted{ opacity:.35; }
+.prize-card.rank-1{ border-color:var(--gold-bright); box-shadow:0 0 0 2px rgba(246,200,95,.5), 0 4px 10px rgba(0,0,0,.25); }
+.prize-card.rank-2{ border-color:#cfd8e3; box-shadow:0 0 0 2px rgba(207,216,227,.4); }
+.prize-card.rank-3{ border-color:#cd8a5a; box-shadow:0 0 0 2px rgba(205,138,90,.4); }
+.rank-badge{
+  position:absolute;
+  top:-9px;
+  left:50%;
+  transform:translateX(-50%);
+  background:var(--red);
+  color:#fff;
+  font-size:11px;
+  font-weight:700;
+  padding:2px 8px;
+  border-radius:20px;
+  white-space:nowrap;
+  box-shadow:0 2px 4px rgba(0,0,0,.3);
+}
 .prize-card .p-emoji{ font-size:28px; }
 .prize-card .p-name{
   font-size:13px;
@@ -394,6 +470,14 @@ body{
 .field-row input[type=text].name-input{ flex:1; min-width:0; width:100%; }
 .field-row input.emoji-input{ flex:0 0 64px; text-align:center; font-size:18px; }
 .field-row input[type=number]{ flex:0 0 72px; }
+.rank-select{
+  font-family:'Zen Maru Gothic',sans-serif;
+  padding:8px 6px;
+  border-radius:8px;
+  border:1.5px solid #ddd;
+  font-size:13px;
+  flex:0 0 auto;
+}
 
 .prize-edit-list{ display:flex; flex-direction:column; gap:8px; margin:6px 0 14px; }
 .prize-edit-row{
@@ -445,6 +529,11 @@ body{
 
 @media (prefers-reduced-motion: reduce){
   .drum-svg.spinning{ animation:none; }
+  .drum-svg{ animation:none; }
+  .drum-frame::after{ animation:none; }
+  .sparkle{ animation:none; opacity:.6; }
+  .spin-btn:not(:disabled){ animation:none; }
+  .ticket.rank-1{ animation:none; }
   .confetti-piece{ animation:none; display:none; }
   .ball-pop.pop-anim{ animation:none; }
 }

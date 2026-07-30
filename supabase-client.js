@@ -13,6 +13,7 @@ async function fetchPrizes(){
   const { data, error } = await supabaseClient
     .from('lottery_prizes')
     .select('*')
+    .order('rank_tier', { ascending: true, nullsFirst: false })
     .order('sort_order', { ascending: true })
     .order('id', { ascending: true });
   if(error){ console.error('景品の取得に失敗', error); return []; }
@@ -45,7 +46,7 @@ async function drawPrizeRemote(){
   if(error){ console.error('抽選の実行に失敗', error); return null; }
   if(!data || data.length === 0) return { soldOut: true };
   const winner = data[0];
-  return { soldOut: false, emoji: winner.out_emoji, name: winner.out_name };
+  return { soldOut: false, emoji: winner.out_emoji, name: winner.out_name, rankTier: winner.out_rank_tier };
 }
 
 // ---------- リアルタイム購読（他の端末での変更を受け取る） ----------
