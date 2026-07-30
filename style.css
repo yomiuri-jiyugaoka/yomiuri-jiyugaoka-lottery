@@ -503,6 +503,19 @@ body{
   background:none; border:none; color:var(--red); font-size:16px; cursor:pointer;
   margin-left:auto;
 }
+.prize-edit-row .order-btn{
+  background:#fff;
+  border:1.5px solid #ddd;
+  border-radius:6px;
+  color:var(--ink-deep);
+  font-size:14px;
+  font-weight:700;
+  width:28px;
+  height:28px;
+  cursor:pointer;
+  flex:0 0 auto;
+}
+.prize-edit-row .order-btn:disabled{ opacity:.3; cursor:not-allowed; }
 .settings-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
 .settings-actions button{
   flex:1;

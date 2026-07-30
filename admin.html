@@ -132,13 +132,15 @@ async function renderPrizeEditList(){
   const prizes = await fetchPrizes();
   const list = document.getElementById('prizeEditList');
   list.innerHTML = '';
-  prizes.forEach(p=>{
+  prizes.forEach((p, idx)=>{
     const row = document.createElement('div');
     row.className = 'prize-edit-row';
     row.innerHTML = `
       <div class="pe-top">
         <span class="pe-emoji">${p.emoji||'🎁'}</span>
         <span class="pe-name">${escapeHtml(p.name)}</span>
+        <button class="order-btn" data-move="up" data-id="${p.id}" title="上に移動" ${idx===0?'disabled':''}>↑</button>
+        <button class="order-btn" data-move="down" data-id="${p.id}" title="下に移動" ${idx===prizes.length-1?'disabled':''}>↓</button>
         <button class="del-btn" data-del="${p.id}" title="削除">🗑️</button>
       </div>
       <div class="pe-bottom">
@@ -180,6 +182,26 @@ async function renderPrizeEditList(){
       renderPrizeEditList();
     });
   });
+  list.querySelectorAll('.order-btn').forEach(btn=>{
+    btn.addEventListener('click', async e=>{
+      const id = Number(e.target.dataset.id);
+      const dir = e.target.dataset.move === 'up' ? -1 : 1;
+      await movePrizeOrder(id, dir);
+    });
+  });
+}
+
+async function movePrizeOrder(id, dir){
+  const prizes = await fetchPrizes();
+  const idx = prizes.findIndex(p=>p.id===id);
+  const targetIdx = idx + dir;
+  if(idx===-1 || targetIdx<0 || targetIdx>=prizes.length) return;
+  [prizes[idx], prizes[targetIdx]] = [prizes[targetIdx], prizes[idx]];
+  for(let i=0;i<prizes.length;i++){
+    await supabaseClient.from('lottery_prizes').update({ sort_order: i }).eq('id', prizes[i].id);
+  }
+  showToast('並び順を変更しました✅');
+  renderPrizeEditList();
 }
 
 async function addPrizeFromForm(){
