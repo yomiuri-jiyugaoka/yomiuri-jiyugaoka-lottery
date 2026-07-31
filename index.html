@@ -97,13 +97,45 @@ function beep(freq, start, dur, type='sine', vol=0.18){
   o.start(c.currentTime+start);
   o.stop(c.currentTime+start+dur+0.05);
 }
-function playTumble(){
-  for(let i=0;i<10;i++){
-    beep(300+Math.random()*200, i*0.16, 0.08, 'square', 0.08);
+function createNoiseBuffer(c, duration){
+  const bufferSize = Math.max(1, Math.floor(c.sampleRate*duration));
+  const buffer = c.createBuffer(1, bufferSize, c.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++) data[i] = Math.random()*2-1;
+  return buffer;
+}
+function playNoiseBurst(start, duration, vol, filterFreq, filterType){
+  if(muted) return;
+  const c = ctx();
+  const src = c.createBufferSource();
+  src.buffer = createNoiseBuffer(c, duration);
+  const filter = c.createBiquadFilter();
+  filter.type = filterType || 'bandpass';
+  filter.frequency.value = filterFreq || 1400;
+  const g = c.createGain();
+  g.gain.setValueAtTime(0, c.currentTime+start);
+  g.gain.linearRampToValueAtTime(vol, c.currentTime+start+0.006);
+  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime+start+duration);
+  src.connect(filter); filter.connect(g); g.connect(c.destination);
+  src.start(c.currentTime+start);
+  src.stop(c.currentTime+start+duration+0.03);
+}
+function playDrumRoll(totalDuration){
+  // ダララララ…と徐々に速く・大きくなる小刻みなドラムロール
+  let t = 0;
+  while(t < totalDuration){
+    const progress = t/totalDuration;
+    const vol = 0.14 + progress*0.18;
+    playNoiseBurst(t, 0.05, vol, 1600);
+    const interval = 0.1 - progress*0.06;
+    t += Math.max(interval, 0.035);
   }
 }
-function playFanfare(){
-  [523.25,659.25,783.99,1046.5].forEach((f,i)=> beep(f, i*0.11, 0.28, 'triangle', 0.2));
+function playSting(){
+  // じゃーん！：シンバル風のノイズ＋和音の一撃
+  playNoiseBurst(0, 0.9, 0.28, 6500, 'highpass');
+  [523.25,659.25,783.99].forEach(f=> beep(f, 0, 0.55, 'sawtooth', 0.16));
+  beep(1046.5, 0, 0.4, 'triangle', 0.14);
 }
 function playEmpty(){
   beep(220,0,0.3,'sawtooth',0.15);
@@ -163,7 +195,7 @@ async function draw(){
   spinBtn.disabled = true;
   spinBtn.textContent = '箱をふっています…';
   box.classList.add('shaking');
-  playTumble();
+  playDrumRoll(1.3);
 
   const resultPromise = drawPrizeRemote();
   const minWait = new Promise(res=> setTimeout(res, 1300));
@@ -204,7 +236,7 @@ async function draw(){
       <div class="prize-name">${escapeHtml(result.name)}</div>
     `;
     requestAnimationFrame(()=> ticket.classList.add('show'));
-    playFanfare();
+    playSting();
     launchConfetti(result.rankTier ? 70 : 34);
   }, 550);
 
