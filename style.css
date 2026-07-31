@@ -149,11 +149,15 @@ body{
   75%{ transform:rotate(4deg) translateY(-4px); }
 }
 .drum-svg.spinning{
-  animation: spin-drum 0.55s linear infinite;
+  animation: shake-drum 0.13s linear infinite;
 }
-@keyframes spin-drum{
-  0%{ transform:rotate(0deg); }
-  100%{ transform:rotate(360deg); }
+@keyframes shake-drum{
+  0%{ transform:rotate(0deg) translate(0,0); }
+  20%{ transform:rotate(-5deg) translate(-4px,2px); }
+  40%{ transform:rotate(4deg) translate(4px,-3px); }
+  60%{ transform:rotate(-4deg) translate(-3px,3px); }
+  80%{ transform:rotate(5deg) translate(3px,-2px); }
+  100%{ transform:rotate(0deg) translate(0,0); }
 }
 .chute{
   width:34px;
