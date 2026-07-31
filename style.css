@@ -110,9 +110,9 @@ body{
   position:absolute;
   inset:-16px;
   border-radius:50%;
-  background: conic-gradient(from 0deg, #e8a93a, #c8353f, #4a7c59, #f6c85f, #e8a93a);
-  filter: blur(16px);
-  opacity:.5;
+  background: conic-gradient(from 0deg, #ffd6e0, #ffe9b8, #d3f2d8, #c9e6ff, #f0d9ff, #ffd6e0);
+  filter: blur(18px);
+  opacity:.7;
   z-index:-1;
   animation: rotate-glow 7s linear infinite;
 }
