@@ -91,7 +91,7 @@ body{
 #muteBtn{ left:8px; }
 #adminLink{ right:8px; }
 
-/* ---------- drum ---------- */
+/* ---------- lottery box ---------- */
 .drum-wrap{
   position:relative;
   width:100%;
@@ -102,8 +102,8 @@ body{
 .drum-frame{
   position:relative;
   z-index:0;
-  width:min(64vw,260px);
-  aspect-ratio:580/710;
+  width:min(70vw,280px);
+  aspect-ratio:200/170;
 }
 .drum-frame::after{
   content:'';
@@ -134,59 +134,61 @@ body{
   0%,100%{ opacity:0; transform:scale(.5) rotate(0deg); }
   50%{ opacity:1; transform:scale(1.15) rotate(15deg); }
 }
-.drum-svg{
+
+.box-svg{
   width:100%;
   height:100%;
   display:block;
-  object-fit:contain;
   filter:drop-shadow(0 10px 18px rgba(0,0,0,.4));
   transition: transform .1s linear;
   animation: idle-wobble 3.2s ease-in-out infinite;
+  transform-origin:50% 90%;
 }
 @keyframes idle-wobble{
   0%,100%{ transform:rotate(0deg) translateY(0); }
-  25%{ transform:rotate(-4deg) translateY(-4px); }
-  75%{ transform:rotate(4deg) translateY(-4px); }
+  25%{ transform:rotate(-2.5deg) translateY(-2px); }
+  75%{ transform:rotate(2.5deg) translateY(-2px); }
 }
-.drum-svg.spinning{
-  animation: shake-drum 0.13s linear infinite;
+.box-svg.shaking{
+  animation: shake-box 0.13s linear infinite;
 }
-@keyframes shake-drum{
+@keyframes shake-box{
   0%{ transform:rotate(0deg) translate(0,0); }
-  20%{ transform:rotate(-5deg) translate(-4px,2px); }
-  40%{ transform:rotate(4deg) translate(4px,-3px); }
-  60%{ transform:rotate(-4deg) translate(-3px,3px); }
-  80%{ transform:rotate(5deg) translate(3px,-2px); }
+  20%{ transform:rotate(-4deg) translate(-4px,1px); }
+  40%{ transform:rotate(3deg) translate(4px,-2px); }
+  60%{ transform:rotate(-3deg) translate(-3px,2px); }
+  80%{ transform:rotate(4deg) translate(3px,-1px); }
   100%{ transform:rotate(0deg) translate(0,0); }
 }
-.chute{
-  width:34px;
-  height:44px;
-  margin-top:-6px;
-  background:linear-gradient(180deg,var(--gold),var(--gold-bright));
-  clip-path:polygon(20% 0,80% 0,100% 100%,0 100%);
-  box-shadow: inset 0 -4px 6px rgba(0,0,0,.25);
-}
 
-.ball-pop{
+.stick{
   position:absolute;
   left:50%;
-  top:58%;
-  width:26px;
-  height:26px;
-  border-radius:50%;
-  background:radial-gradient(circle at 30% 30%, #fff, var(--gold-bright) 60%, var(--gold));
-  box-shadow:0 3px 6px rgba(0,0,0,.4);
+  top:36%;
+  width:16px;
+  height:80px;
+  transform:translate(-50%, 30px) rotate(0deg);
   opacity:0;
   pointer-events:none;
+  z-index:1;
 }
-.ball-pop.pop-anim{
-  animation: pop-out .7s ease-in forwards;
+.stick-body{
+  width:100%;
+  height:100%;
+  border-radius:5px;
+  background:linear-gradient(180deg, #a12630 0%, #a12630 24%, #fdf6e8 24%, #fdf6e8 100%);
+  box-shadow:0 3px 6px rgba(0,0,0,.35);
+  border:1.5px solid #7d1c23;
 }
-@keyframes pop-out{
-  0%{ opacity:1; transform:translate(-50%,-50%) scale(.4); }
-  40%{ opacity:1; transform:translate(-50%, 40px) scale(1.1); }
-  100%{ opacity:0; transform:translate(-50%, 130px) scale(1); }
+.stick.pull-anim{
+  animation: stick-pull 1.3s cubic-bezier(.25,1,.4,1) forwards;
+}
+@keyframes stick-pull{
+  0%{ transform:translate(-50%, 30px) rotate(0deg); opacity:0; }
+  15%{ opacity:1; }
+  40%{ transform:translate(-50%, -55px) rotate(-10deg); opacity:1; }
+  60%{ transform:translate(-50%, -70px) rotate(8deg); opacity:1; }
+  100%{ transform:translate(-50%, -95px) rotate(-4deg); opacity:1; }
 }
 
 /* ---------- ticket reveal ---------- */
@@ -548,12 +550,12 @@ body{
 }
 
 @media (prefers-reduced-motion: reduce){
-  .drum-svg.spinning{ animation:none; }
-  .drum-svg{ animation:none; }
+  .box-svg.shaking{ animation:none; }
+  .box-svg{ animation:none; }
   .drum-frame::after{ animation:none; }
   .sparkle{ animation:none; opacity:.6; }
   .spin-btn:not(:disabled){ animation:none; }
   .ticket.rank-1{ animation:none; }
   .confetti-piece{ animation:none; display:none; }
-  .ball-pop.pop-anim{ animation:none; }
+  .stick.pull-anim{ animation:none; opacity:1; transform:translate(-50%,-95px) rotate(0deg); }
 }

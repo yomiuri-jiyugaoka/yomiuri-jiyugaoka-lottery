@@ -25,10 +25,22 @@
       <span class="sparkle sp3">✨</span>
       <span class="sparkle sp4">🎉</span>
       <span class="sparkle sp5">⭐</span>
-      <img class="drum-svg" id="drumSvg" src="garapon-drum.png" alt="ガラガラ抽選機">
-      <div class="ball-pop" id="ballPop"></div>
+      <svg class="box-svg" id="boxSvg" viewBox="0 0 200 170">
+        <rect x="14" y="70" width="172" height="90" rx="10" fill="#a12630" stroke="#7d1c23" stroke-width="5"/>
+        <rect x="14" y="70" width="172" height="90" rx="10" fill="none" stroke="#f6c85f" stroke-width="2" opacity=".5" transform="translate(4,4) scale(0.96)"/>
+        <rect x="6" y="30" width="188" height="46" rx="12" fill="#c8353f" stroke="#7d1c23" stroke-width="5"/>
+        <ellipse cx="100" cy="53" rx="30" ry="12" fill="#12213a"/>
+        <ellipse cx="100" cy="51" rx="30" ry="11" fill="#1c2b45"/>
+        <circle cx="24" cy="115" r="7" fill="#f6c85f" stroke="#7d1c23" stroke-width="2"/>
+        <circle cx="176" cy="115" r="7" fill="#f6c85f" stroke="#7d1c23" stroke-width="2"/>
+        <circle cx="24" cy="145" r="7" fill="#f6c85f" stroke="#7d1c23" stroke-width="2"/>
+        <circle cx="176" cy="145" r="7" fill="#f6c85f" stroke="#7d1c23" stroke-width="2"/>
+        <text x="100" y="128" text-anchor="middle" font-size="26" font-weight="900" fill="#f6c85f" font-family="'Zen Maru Gothic', sans-serif">抽選</text>
+      </svg>
+      <div class="stick" id="stickPop">
+        <div class="stick-body"></div>
+      </div>
     </div>
-    <div class="chute"></div>
   </div>
 
   <div class="ticket" id="ticket">
@@ -36,7 +48,7 @@
     <div id="ticketBody"></div>
   </div>
 
-  <button class="spin-btn" id="spinBtn">ガラガラ回す！</button>
+  <button class="spin-btn" id="spinBtn">くじを引く！</button>
 
   <section style="width:100%">
     <div class="board-title">景品</div>
@@ -134,25 +146,26 @@ async function renderCenterName(){
 async function draw(){
   if(isSpinning) return;
   const spinBtn = document.getElementById('spinBtn');
-  const drum = document.getElementById('drumSvg');
+  const box = document.getElementById('boxSvg');
   const ticket = document.getElementById('ticket');
   const ticketBody = document.getElementById('ticketBody');
-  const ballPop = document.getElementById('ballPop');
+  const stick = document.getElementById('stickPop');
 
   ticket.classList.remove('show');
+  stick.classList.remove('pull-anim');
   isSpinning = true;
   spinBtn.disabled = true;
-  spinBtn.textContent = 'まわしています…';
-  drum.classList.add('spinning');
+  spinBtn.textContent = '箱をふっています…';
+  box.classList.add('shaking');
   playTumble();
 
   const resultPromise = drawPrizeRemote();
-  const minWait = new Promise(res=> setTimeout(res, 1600));
+  const minWait = new Promise(res=> setTimeout(res, 1300));
   const [result] = await Promise.all([resultPromise, minWait]);
 
-  drum.classList.remove('spinning');
+  box.classList.remove('shaking');
   spinBtn.disabled = false;
-  spinBtn.textContent = 'ガラガラ回す！';
+  spinBtn.textContent = 'くじを引く！';
   isSpinning = false;
 
   if(!result){
@@ -168,22 +181,25 @@ async function draw(){
     return;
   }
 
-  ballPop.classList.remove('pop-anim');
-  void ballPop.offsetWidth;
-  ballPop.classList.add('pop-anim');
+  void stick.offsetWidth;
+  stick.classList.add('pull-anim');
+  beep(700,0,0.12,'triangle',0.15);
+  beep(900,0.08,0.12,'triangle',0.15);
 
   ticket.classList.remove('rank-1','rank-2','rank-3');
   const rankBadge = result.rankTier ? `<div class="ticket-rank-badge">${result.rankTier===1?'🏆 1等 🏆':result.rankTier===2?'🥈 2等 🥈':'🥉 3等 🥉'}</div>` : '';
   if(result.rankTier) ticket.classList.add('rank-'+result.rankTier);
 
-  ticketBody.innerHTML = `
-    ${rankBadge}
-    <div class="emoji">${result.emoji||'🎁'}</div>
-    <div class="prize-name">${escapeHtml(result.name)}</div>
-  `;
-  requestAnimationFrame(()=> ticket.classList.add('show'));
-  playFanfare();
-  launchConfetti(result.rankTier ? 70 : 34);
+  setTimeout(()=>{
+    ticketBody.innerHTML = `
+      ${rankBadge}
+      <div class="emoji">${result.emoji||'🎁'}</div>
+      <div class="prize-name">${escapeHtml(result.name)}</div>
+    `;
+    requestAnimationFrame(()=> ticket.classList.add('show'));
+    playFanfare();
+    launchConfetti(result.rankTier ? 70 : 34);
+  }, 550);
 
   // 自分の画面はすぐ更新（他の端末はRealtime経由で自動更新されます）
   renderPrizes();
