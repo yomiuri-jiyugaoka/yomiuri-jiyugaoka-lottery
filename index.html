@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ガラガラ抽選会</title>
+<title>おたのしみ抽選会</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -14,7 +14,7 @@
   <div class="booth-header">
     <button class="icon-btn" id="muteBtn" title="音のオン/オフ">🔊</button>
     <a class="icon-btn" id="adminLink" href="admin.html" title="スタッフ設定">⚙️</a>
-    <div class="noren-title">ガラガラ抽選会</div>
+    <div class="noren-title">おたのしみ抽選会</div>
     <div class="center-name" id="centerNameLabel"></div>
   </div>
 
@@ -38,7 +38,7 @@
         <text x="100" y="128" text-anchor="middle" font-size="26" font-weight="900" fill="#f6c85f" font-family="'Zen Maru Gothic', sans-serif">抽選</text>
       </svg>
       <div class="stick" id="stickPop">
-        <div class="stick-body"></div>
+        <img class="stick-body" id="stickImg" src="" alt="くじ">
       </div>
     </div>
   </div>
@@ -70,6 +70,12 @@
 <script>
 let muted = loadMuted();
 let isSpinning = false;
+
+// くじの画像候補（この配列に画像ファイル名を追加/変更してください）
+const STICK_IMAGES = ['kuji1.png', 'kuji2.png', 'kuji3.png', 'kuji4.png', 'kuji5.png'];
+function pickRandomStickImage(){
+  return STICK_IMAGES[Math.floor(Math.random()*STICK_IMAGES.length)];
+}
 
 // ---------- sound ----------
 let audioCtx = null;
@@ -182,6 +188,7 @@ async function draw(){
   }
 
   void stick.offsetWidth;
+  document.getElementById('stickImg').src = pickRandomStickImage();
   stick.classList.add('pull-anim');
   beep(700,0,0.12,'triangle',0.15);
   beep(900,0.08,0.12,'triangle',0.15);

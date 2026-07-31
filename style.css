@@ -164,10 +164,10 @@ body{
 .stick{
   position:absolute;
   left:50%;
-  top:36%;
-  width:16px;
-  height:80px;
-  transform:translate(-50%, 30px) rotate(0deg);
+  top:32%;
+  width:92px;
+  height:92px;
+  transform:translate(-50%, 30px) rotate(0deg) scale(.4);
   opacity:0;
   pointer-events:none;
   z-index:1;
@@ -175,20 +175,18 @@ body{
 .stick-body{
   width:100%;
   height:100%;
-  border-radius:5px;
-  background:linear-gradient(180deg, #a12630 0%, #a12630 24%, #fdf6e8 24%, #fdf6e8 100%);
-  box-shadow:0 3px 6px rgba(0,0,0,.35);
-  border:1.5px solid #7d1c23;
+  object-fit:contain;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.35));
 }
 .stick.pull-anim{
   animation: stick-pull 1.3s cubic-bezier(.25,1,.4,1) forwards;
 }
 @keyframes stick-pull{
-  0%{ transform:translate(-50%, 30px) rotate(0deg); opacity:0; }
+  0%{ transform:translate(-50%, 30px) rotate(0deg) scale(.4); opacity:0; }
   15%{ opacity:1; }
-  40%{ transform:translate(-50%, -55px) rotate(-10deg); opacity:1; }
-  60%{ transform:translate(-50%, -70px) rotate(8deg); opacity:1; }
-  100%{ transform:translate(-50%, -95px) rotate(-4deg); opacity:1; }
+  45%{ transform:translate(-50%, -55px) rotate(-10deg) scale(1.08); opacity:1; }
+  65%{ transform:translate(-50%, -70px) rotate(8deg) scale(1); opacity:1; }
+  100%{ transform:translate(-50%, -95px) rotate(-4deg) scale(1); opacity:1; }
 }
 
 /* ---------- ticket reveal ---------- */
@@ -557,5 +555,5 @@ body{
   .spin-btn:not(:disabled){ animation:none; }
   .ticket.rank-1{ animation:none; }
   .confetti-piece{ animation:none; display:none; }
-  .stick.pull-anim{ animation:none; opacity:1; transform:translate(-50%,-95px) rotate(0deg); }
+  .stick.pull-anim{ animation:none; opacity:1; transform:translate(-50%,-95px) rotate(0deg) scale(1); }
 }
