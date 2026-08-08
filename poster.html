@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>景品一覧（印刷用）</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@page{ size: A4; margin: 15mm; }
+
+body{
+  background:#fff;
+  padding:0;
+  display:block;
+}
+.poster-toolbar{
+  max-width:800px;
+  margin:0 auto 16px;
+  display:flex;
+  justify-content:center;
+  gap:10px;
+}
+.poster-toolbar button, .poster-toolbar a{
+  padding:10px 18px;
+  border-radius:10px;
+  border:none;
+  font-weight:700;
+  font-family:'Zen Maru Gothic',sans-serif;
+  cursor:pointer;
+  font-size:14px;
+  text-decoration:none;
+  display:inline-block;
+}
+.poster-toolbar .btn-primary{ background:var(--red); color:#fff; }
+.poster-toolbar .btn-secondary{ background:#e8e2d2; color:var(--ink-deep); }
+
+.poster-page{
+  width:210mm;
+  min-height:297mm;
+  margin:0 auto;
+  background:#fff;
+  padding:15mm;
+  box-sizing:border-box;
+  box-shadow:0 4px 20px rgba(0,0,0,.12);
+}
+.poster-header{
+  text-align:center;
+  margin-bottom:10mm;
+}
+.poster-header .poster-title{
+  display:inline-block;
+  background:var(--red);
+  color:#fff;
+  padding:10px 28px;
+  border-radius:6px 6px 22px 22px;
+  font-weight:900;
+  font-size:28px;
+  letter-spacing:.05em;
+}
+.poster-header .poster-sub{
+  margin-top:8px;
+  font-size:14px;
+  color:var(--red-deep);
+}
+.poster-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:8mm;
+}
+.poster-item{
+  border:2px solid rgba(28,43,69,.15);
+  border-radius:14px;
+  padding:8mm 4mm;
+  text-align:center;
+}
+.poster-item.rank-1{ border-color:var(--gold-bright); background:rgba(246,200,95,.08); }
+.poster-item.rank-2{ border-color:#b9c4d1; background:rgba(185,196,209,.1); }
+.poster-item.rank-3{ border-color:#cd8a5a; background:rgba(205,138,90,.08); }
+.poster-item .pi-badge{
+  font-size:12px;
+  font-weight:700;
+  color:var(--red-deep);
+  margin-bottom:4px;
+}
+.poster-item .pi-emoji{ font-size:34px; }
+.poster-item .pi-name{
+  font-size:15px;
+  font-weight:700;
+  margin-top:4px;
+  word-break:break-word;
+  color:var(--ink-deep);
+}
+.poster-empty{
+  text-align:center;
+  color:#999;
+  padding:40px 0;
+}
+
+@media print{
+  .poster-toolbar{ display:none; }
+  .poster-page{ box-shadow:none; margin:0; }
+  body{ padding:0; }
+}
+</style>
+</head>
+<body>
+
+<div class="poster-toolbar no-print">
+  <a class="btn-secondary" href="admin.html">← 設定にもどる</a>
+  <button class="btn-primary" id="printBtn">この一覧を印刷する</button>
+</div>
+
+<div class="poster-page">
+  <div class="poster-header">
+    <div class="poster-title">景品のご案内</div>
+    <div class="poster-sub" id="centerNameLabel"></div>
+  </div>
+  <div class="poster-grid" id="posterGrid"></div>
+</div>
+
+<script src="supabase-client.js"></script>
+<script>
+function escapeHtmlLocal(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function renderPoster(){
+  const settings = await fetchSettings();
+  document.getElementById('centerNameLabel').textContent = settings.center_name;
+
+  const prizes = await fetchPrizes();
+  const grid = document.getElementById('posterGrid');
+  grid.innerHTML = '';
+
+  if(prizes.length === 0){
+    grid.innerHTML = '<div class="poster-empty">まだ景品が登録されていません</div>';
+    return;
+  }
+
+  prizes.forEach(p=>{
+    const item = document.createElement('div');
+    item.className = 'poster-item' + (p.rank_tier ? ` rank-${p.rank_tier}` : '');
+    const badge = p.rank_tier ? `<div class="pi-badge">${p.rank_tier===1?'🏆 1等':p.rank_tier===2?'🥈 2等':'🥉 3等'}</div>` : '';
+    item.innerHTML = `
+      ${badge}
+      <div class="pi-emoji">${p.emoji||'🎁'}</div>
+      <div class="pi-name">${escapeHtmlLocal(p.name)}</div>
+    `;
+    grid.appendChild(item);
+  });
+}
+
+document.getElementById('printBtn').addEventListener('click', ()=> window.print());
+
+renderPoster();
+</script>
+</body>
+</html>

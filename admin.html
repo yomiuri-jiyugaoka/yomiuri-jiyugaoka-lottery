@@ -58,6 +58,9 @@
         <button class="btn-secondary" id="resetStockBtn">在庫をすべてリセット</button>
         <button class="btn-danger" id="clearHistoryBtn">履歴を消去</button>
       </div>
+      <div class="settings-actions">
+        <a class="btn-secondary" href="poster.html" style="text-align:center; text-decoration:none;">🖨️ 景品一覧を印刷（A4）</a>
+      </div>
       <div class="save-toast" id="saveToast"></div>
     </div>
   </div>
@@ -221,7 +224,7 @@ async function addPrizeFromForm(){
 }
 
 async function saveCenterName(){
-  const centerName = document.getElementById('centerNameInput').value.trim() || 'ガラガラ抽選会';
+  const centerName = document.getElementById('centerNameInput').value.trim() || 'おたのしみ抽選会';
   const { error } = await supabaseClient.from('lottery_settings').update({ center_name: centerName }).eq('id', 1);
   showToast(error ? '保存に失敗しました' : '保存しました✅');
 }
