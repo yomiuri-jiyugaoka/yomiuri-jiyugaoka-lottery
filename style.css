@@ -312,7 +312,7 @@ body{
   position:relative;
   box-shadow:0 2px 8px rgba(28,43,69,.08);
 }
-.prize-card.depleted{ opacity:.4; }
+
 .prize-card.rank-1{ border-color:var(--gold-bright); box-shadow:0 0 0 2px rgba(246,200,95,.5), 0 4px 10px rgba(0,0,0,.12); }
 .prize-card.rank-2{ border-color:#b9c4d1; box-shadow:0 0 0 2px rgba(185,196,209,.5); }
 .prize-card.rank-3{ border-color:#cd8a5a; box-shadow:0 0 0 2px rgba(205,138,90,.4); }
